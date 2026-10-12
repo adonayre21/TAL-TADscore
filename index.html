@@ -57,7 +57,7 @@
         .aa-basic{color:#ce93d8}
         .aa-other{color:#666}
         .tad-region{background:rgba(79,195,247,0.15)}
-        .alignment{font-family:'Courier New',monospace;font-size:0.85em;line-height:2;background:#0a0a0a;padding:16px;border-radius:6px;border:1px solid #222;overflow-x:auto}
+        .alignment{font-family:'Courier New',monospace;font-size:0.85em;line-height:2;background:#0a0a0a;padding:16px;border-radius:6px;border:1px solid #222;overflow-x:auto;white-space:pre}
         .match{color:#66bb6a}
         .conservative{color:#ffa726}
         .mismatch{color:#ef5350}
@@ -280,15 +280,15 @@
 </div>
 
 <script>
-const CANONICAL_MOTIF="MREQDEDPFAGAADDFPAFNEEELAWLMELLPQ";
-const W={ad:0.30,lfw:0.25,ncd:0.20,il:0.15,mi:0.10};
-const REFS={
+var CANONICAL_MOTIF="MREQDEDPFAGAADDFPAFNEEELAWLMELLPQ";
+var W={ad:0.30,lfw:0.25,ncd:0.20,il:0.15,mi:0.10};
+var REFS={
     "X. citri":{mean:0.449,std:0.042,n:42},"X. oryzae":{mean:0.406,std:0.065,n:35},
     "X. axonopodis":{mean:0.473,std:0.051,n:18},"X. euvesicatoria":{mean:0.477,std:0.038,n:21},
     "X. campestris":{mean:0.421,std:0.058,n:10},"Control+":{mean:0.505,std:0.014,n:10},
     "Control\u2212":{mean:0.112,std:0.004,n:10}
 };
-const EX={
+var EX={
     tal:{id:"TAL_CTR_canonical",seq:"MREQDEDPFAGAADDFPAFNEEELAWLMELLPQ"},
     vp16:{id:"VP16_TAD_413-490",seq:"APPTDVSLGDELHLDGEDVAMAHADALDDFDLDMLGDGDSPGPGFTPHDSAPYGALDMADFEFEQMFTDALGIDEYGG"},
     p53:{id:"p53_TAD1_1-42",seq:"MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDL"},
@@ -297,71 +297,72 @@ const EX={
     negative:{id:"GFP_barrel_negative",seq:"MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTLTYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTR"}
 };
 
-const AA_COLORS={
+var AA_COLORS={
     D:'#ef5350',E:'#ef5350',
     L:'#2196f3',F:'#2196f3',W:'#2196f3',
     V:'#66bb6a',I:'#66bb6a',M:'#66bb6a',Y:'#66bb6a',
     R:'#ce93d8',K:'#ce93d8',H:'#ce93d8'
 };
-const DEFAULT_COLOR='#999';
+var DEFAULT_COLOR='#999';
 function aaColor(aa){return AA_COLORS[aa]||DEFAULT_COLOR;}
 
-function cc(s,ch){let c=0;for(const x of s)if(ch.includes(x))c++;return c;}
+function cc(s,ch){var c=0;for(var i=0;i<s.length;i++)if(ch.indexOf(s[i])>=0)c++;return c;}
 
 function motifId(seq){
-    const m=CANONICAL_MOTIF,mL=m.length;
-    if(seq.length<mL){let c=0;for(let i=0;i<seq.length;i++)if(seq[i]===m[i])c++;return c/mL;}
-    let best=0;
-    for(let i=0;i<=seq.length-mL;i++){let c=0;for(let j=0;j<mL;j++)if(seq[i+j]===m[j])c++;best=Math.max(best,c/mL);}
+    var m=CANONICAL_MOTIF,mL=m.length;
+    if(seq.length<mL){var c=0;for(var i=0;i<seq.length;i++)if(seq[i]===m[i])c++;return c/mL;}
+    var best=0;
+    for(var i=0;i<=seq.length-mL;i++){var c=0;for(var j=0;j<mL;j++)if(seq[i+j]===m[j])c++;if(c/mL>best)best=c/mL;}
     return best;
 }
 
 function score(seq){
-    const L=seq.length;if(L===0)return{s:0,c:{}};
-    const ad=cc(seq,"DE")/L,lfw=cc(seq,"LFW")/L;
-    const neg=cc(seq,"DE"),pos=cc(seq,"RK")+0.1*cc(seq,"H");
-    const ncd=Math.max(0,(neg-pos))/L;
-    let il=0;for(let i=0;i<L-1;i++){
-        if(("DE".includes(seq[i])&&"LFWIV".includes(seq[i+1]))||("LFWIV".includes(seq[i])&&"DE".includes(seq[i+1])))il++;}
-    const ilf=il/Math.max(L-1,1);
-    const mi=motifId(seq);
-    return{s:W.ad*ad+W.lfw*lfw+W.ncd*ncd+W.il*ilf+W.mi*mi,c:{ad,lfw,ncd,ilf,mi}};
+    var L=seq.length;if(L===0)return{s:0,c:{}};
+    var ad=cc(seq,"DE")/L,lfw=cc(seq,"LFW")/L;
+    var neg=cc(seq,"DE"),pos=cc(seq,"RK")+0.1*cc(seq,"H");
+    var ncd=Math.max(0,(neg-pos))/L;
+    var il=0;for(var i=0;i<L-1;i++){
+        if(("DE".indexOf(seq[i])>=0&&"LFWIV".indexOf(seq[i+1])>=0)||("LFWIV".indexOf(seq[i])>=0&&"DE".indexOf(seq[i+1])>=0))il++;}
+    var ilf=il/Math.max(L-1,1);
+    var mi=motifId(seq);
+    return{s:W.ad*ad+W.lfw*lfw+W.ncd*ncd+W.il*ilf+W.mi*mi,c:{ad:ad,lfw:lfw,ncd:ncd,ilf:ilf,mi:mi}};
 }
 
 function positionContributions(seq){
-    const L=seq.length;
-    const contributions=[];
-    const baseScore=score(seq).s;
-    for(let i=0;i<L;i++){
-        const aa=seq[i];
-        const mutant=seq.substring(0,i)+'A'+seq.substring(i+1);
-        const mutScore=score(mutant).s;
-        const contrib=baseScore-mutScore;
+    var L=seq.length;
+    var contributions=[];
+    var baseScore=score(seq).s;
+    for(var i=0;i<L;i++){
+        var aa=seq[i];
+        var mutant=seq.substring(0,i)+'A'+seq.substring(i+1);
+        var mutScore=score(mutant).s;
+        var contrib=baseScore-mutScore;
         contributions.push({pos:i,aa:aa,contribution:Math.max(contrib,0),rawContrib:contrib});
     }
     return contributions;
 }
 
 function optimizeSequence(seq,maxMutations){
-    let current=seq;
-    let currentScore=score(current).s;
-    const mutations=[];
-    const candidates="DEFLW";
-    const mutableFrom="AGSTNQ";
-    const maxMut=maxMutations||Math.min(Math.ceil(seq.length*0.15),15);
-    for(let round=0;round<maxMut;round++){
-        let bestDelta=0,bestPos=-1,bestAA='';
-        for(let i=0;i<current.length;i++){
-            if(!mutableFrom.includes(current[i]))continue;
-            for(const rep of candidates){
-                const mut=current.substring(0,i)+rep+current.substring(i+1);
-                const ms=score(mut).s;
-                const delta=ms-currentScore;
+    var current=seq;
+    var currentScore=score(current).s;
+    var mutations=[];
+    var candidates="DEFLW";
+    var mutableFrom="AGSTNQ";
+    var maxMut=maxMutations||Math.min(Math.ceil(seq.length*0.15),15);
+    for(var round=0;round<maxMut;round++){
+        var bestDelta=0,bestPos=-1,bestAA='';
+        for(var i=0;i<current.length;i++){
+            if(mutableFrom.indexOf(current[i])<0)continue;
+            for(var r=0;r<candidates.length;r++){
+                var rep=candidates[r];
+                var mut=current.substring(0,i)+rep+current.substring(i+1);
+                var ms=score(mut).s;
+                var delta=ms-currentScore;
                 if(delta>bestDelta){bestDelta=delta;bestPos=i;bestAA=rep;}
             }
         }
         if(bestPos===-1||bestDelta<0.0001)break;
-        const oldAA=current[bestPos];
+        var oldAA=current[bestPos];
         current=current.substring(0,bestPos)+bestAA+current.substring(bestPos+1);
         currentScore+=bestDelta;
         mutations.push({pos:bestPos+1,from:oldAA,to:bestAA,delta:bestDelta,cumScore:currentScore});
@@ -369,70 +370,92 @@ function optimizeSequence(seq,maxMutations){
     return{sequence:current,score:currentScore,mutations:mutations};
 }
 
+/* ============================================================
+   SEQUENCE LOGO RENDERER (Canvas) — FIXED v2.0.1
+   FIX: positive scaleY + textBaseline='top' so letters render
+   ============================================================ */
 function drawLogo(canvasId,seq,contributions,title){
-    const canvas=document.getElementById(canvasId);
-    const L=seq.length;
-    const charW=Math.max(18,Math.min(32,900/L));
-    const padL=50,padR=20,padT=30,padB=40;
+    var canvas=document.getElementById(canvasId);
+    var L=seq.length;
+    var charW=Math.max(18,Math.min(32,900/L));
+    var padL=50,padR=20,padT=30,padB=40;
     canvas.width=padL+L*charW+padR;
     canvas.height=240;
-    const ctx=canvas.getContext('2d');
+    var ctx=canvas.getContext('2d');
     ctx.fillStyle='#ffffff';
     ctx.fillRect(0,0,canvas.width,canvas.height);
-    const plotH=canvas.height-padT-padB;
-    const maxContrib=Math.max(...contributions.map(c=>c.contribution),0.005);
+    var plotH=canvas.height-padT-padB;
 
+    /* find max contribution for scaling */
+    var maxContrib=0.005;
+    for(var i=0;i<contributions.length;i++){
+        if(contributions[i].contribution>maxContrib)maxContrib=contributions[i].contribution;
+    }
+
+    /* Y axis line */
     ctx.strokeStyle='#ccc';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,padT+plotH);ctx.stroke();
 
+    /* Y axis ticks */
     ctx.fillStyle='#666';ctx.font='10px sans-serif';ctx.textAlign='right';
-    for(let i=0;i<=4;i++){
-        const val=(maxContrib*(4-i)/4);
-        const y=padT+plotH*i/4;
+    for(var i=0;i<=4;i++){
+        var val=(maxContrib*(4-i)/4);
+        var y=padT+plotH*i/4;
         ctx.fillText(val.toFixed(3),padL-5,y+3);
         ctx.strokeStyle='#eee';ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(canvas.width-padR,y);ctx.stroke();
     }
 
+    /* Y axis label */
     ctx.save();ctx.translate(12,padT+plotH/2);ctx.rotate(-Math.PI/2);
     ctx.fillStyle='#666';ctx.font='11px sans-serif';ctx.textAlign='center';
     ctx.fillText('Activation Contribution',0,0);ctx.restore();
 
-    for(let i=0;i<L;i++){
-        const c=contributions[i];
-        const x=padL+i*charW;
-        const letterH=Math.max((c.contribution/maxContrib)*plotH*0.85,2);
-        const y=padT+plotH-letterH;
+    /* Draw each letter — height proportional to contribution */
+    for(var i=0;i<L;i++){
+        var c=contributions[i];
+        var x=padL+i*charW;
+        var letterH=Math.max((c.contribution/maxContrib)*plotH*0.85,3);
+        var y=padT+plotH-letterH;
+
         ctx.save();
-        ctx.translate(x+charW/2,y+letterH);
-        ctx.scale(1,-letterH/20);
+        ctx.translate(x+charW/2, y);
+        var scaleY=letterH/20;
+        ctx.scale(1, scaleY);
         ctx.fillStyle=aaColor(c.aa);
         ctx.font='bold 20px Courier New';
         ctx.textAlign='center';
-        ctx.textBaseline='bottom';
-        ctx.fillText(c.aa,0,0);
+        ctx.textBaseline='top';
+        ctx.fillText(c.aa, 0, 0);
         ctx.restore();
+
+        /* Position numbers */
         if((i+1)%5===0||i===0||i===L-1||L<=20){
             ctx.fillStyle='#888';ctx.font='9px sans-serif';ctx.textAlign='center';
             ctx.fillText(String(i+1),x+charW/2,padT+plotH+14);
         }
     }
 
+    /* Title */
     ctx.fillStyle='#333';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
     ctx.fillText(title||'Sequence Logo',canvas.width/2,16);
+
+    /* X axis label */
     ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='center';
     ctx.fillText('Position',padL+(L*charW)/2,padT+plotH+32);
 }
 
 function downloadLogo(canvasId,suffix){
-    const canvas=document.getElementById(canvasId);
-    const a=document.createElement('a');
+    var canvas=document.getElementById(canvasId);
+    var a=document.createElement('a');
     a.download='TAL_TADscore_logo_'+suffix+'.png';
     a.href=canvas.toDataURL('image/png');
     a.click();
 }
 
 function comp(seq){
-    const L=seq.length;
+    var L=seq.length;
+    var freqs={};for(var i=0;i<seq.length;i++)freqs[seq[i]]=(freqs[seq[i]]||0)+1;
+    var H=0;for(var a in freqs){var p=freqs[a]/L;if(p>0)H-=p*Math.log2(p);}
     return{
         acidic:(cc(seq,"DE")/L*100).toFixed(1),
         hydrophobic:(cc(seq,"VILMFWY")/L*100).toFixed(1),
@@ -440,91 +463,92 @@ function comp(seq){
         basic:(cc(seq,"RKH")/L*100).toFixed(1),
         net_charge:(cc(seq,"RK")+0.1*cc(seq,"H")-cc(seq,"DE")).toFixed(1),
         interleaving:(score(seq).c.ilf*100).toFixed(1),
-        shannon:(function(){const c={};for(const a of seq)c[a]=(c[a]||0)+1;let H=0;const L2=seq.length;for(const a in c){const p=c[a]/L2;if(p>0)H-=p*Math.log2(p);}return H;})().toFixed(3),
+        shannon:H.toFixed(3),
         motif_id:(motifId(seq)*100).toFixed(1)
     };
 }
 
 function scanTAD(seq,ws,th){
-    ws=ws||33;th=th||0.15;const cands=[];if(seq.length<ws)ws=seq.length;
-    for(let i=0;i<=seq.length-ws;i++){const w=seq.substring(i,i+ws),r=score(w);
+    ws=ws||33;th=th||0.15;var cands=[];if(seq.length<ws)ws=seq.length;
+    for(var i=0;i<=seq.length-ws;i++){var w=seq.substring(i,i+ws),r=score(w);
         if(r.s>=th)cands.push({start:i+1,end:i+ws,score:r.s,seq:w,
             acidic:(cc(w,"DE")/ws*100).toFixed(1),lfw:(cc(w,"LFW")/ws*100).toFixed(1),
             motif:(r.c.mi*100).toFixed(1)});}
-    cands.sort((a,b)=>b.score-a.score);
-    const sel=[],used=new Set();
-    for(const c of cands){let ov=0;for(let p=c.start;p<=c.end;p++)if(used.has(p))ov++;
-        if(ov/(c.end-c.start+1)<0.5){sel.push(c);for(let p=c.start;p<=c.end;p++)used.add(p);}}
-    return sel.sort((a,b)=>a.start-b.start);
+    cands.sort(function(a,b){return b.score-a.score;});
+    var sel=[],used={};
+    for(var k=0;k<cands.length;k++){var c=cands[k];var ov=0;for(var p=c.start;p<=c.end;p++)if(used[p])ov++;
+        if(ov/(c.end-c.start+1)<0.5){sel.push(c);for(var p=c.start;p<=c.end;p++)used[p]=true;}}
+    return sel.sort(function(a,b){return a.start-b.start;});
 }
 
 function suggestMut(seq,dir,n){
-    n=n||8;const orig=score(seq).s,sugs=[];
-    for(let i=0;i<seq.length;i++){const aa=seq[i];
-        if(dir==="increase"&&"AGSTQN".includes(aa)){
-            for(const rep of "DELFW"){const m=seq.substring(0,i)+rep+seq.substring(i+1);
-                const ns=score(m).s,d=ns-orig;if(d>0)sugs.push({pos:i+1,from:aa,to:rep,score:ns,delta:d});}
-        }else if(dir==="decrease"&&"DEFLW".includes(aa)){
-            const m=seq.substring(0,i)+"A"+seq.substring(i+1);
-            const ns=score(m).s,d=ns-orig;if(d<0)sugs.push({pos:i+1,from:aa,to:"A",score:ns,delta:d});}
+    n=n||8;var orig=score(seq).s,sugs=[];
+    for(var i=0;i<seq.length;i++){var aa=seq[i];
+        if(dir==="increase"&&"AGSTQN".indexOf(aa)>=0){
+            var reps="DELFW";for(var r=0;r<reps.length;r++){var rep=reps[r];var m=seq.substring(0,i)+rep+seq.substring(i+1);
+                var ns=score(m).s,d=ns-orig;if(d>0)sugs.push({pos:i+1,from:aa,to:rep,score:ns,delta:d});}
+        }else if(dir==="decrease"&&"DEFLW".indexOf(aa)>=0){
+            var m=seq.substring(0,i)+"A"+seq.substring(i+1);
+            var ns=score(m).s,d=ns-orig;if(d<0)sugs.push({pos:i+1,from:aa,to:"A",score:ns,delta:d});}
     }
-    sugs.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));return sugs.slice(0,n);
+    sugs.sort(function(a,b){return Math.abs(b.delta)-Math.abs(a.delta);});return sugs.slice(0,n);
 }
 
 function alignMotif(seq){
-    const m=CANONICAL_MOTIF,mL=m.length;let bP=0,bI=0;
-    if(seq.length<mL){let c=0;for(let i=0;i<seq.length;i++)if(seq[i]===m[i])c++;return{pos:0,identity:c/mL,window:seq,motif:m.substring(0,seq.length)};}
-    for(let i=0;i<=seq.length-mL;i++){let c=0;for(let j=0;j<mL;j++)if(seq[i+j]===m[j])c++;if(c/mL>bI){bI=c/mL;bP=i;}}
+    var m=CANONICAL_MOTIF,mL=m.length;var bP=0,bI=0;
+    if(seq.length<mL){var c=0;for(var i=0;i<seq.length;i++)if(seq[i]===m[i])c++;return{pos:0,identity:c/mL,window:seq,motif:m.substring(0,seq.length)};}
+    for(var i=0;i<=seq.length-mL;i++){var c=0;for(var j=0;j<mL;j++)if(seq[i+j]===m[j])c++;if(c/mL>bI){bI=c/mL;bP=i;}}
     return{pos:bP,identity:bI,window:seq.substring(bP,bP+mL),motif:m};
 }
 
 function sameGrp(a,b){
-    const gs=[new Set("DE"),new Set("RKH"),new Set("LFWMVI"),new Set("STNQ"),new Set("AG")];
-    for(const g of gs)if(g.has(a)&&g.has(b))return true;return false;
+    var gs=["DE","RKH","LFWMVI","STNQ","AG"];
+    for(var g=0;g<gs.length;g++)if(gs[g].indexOf(a)>=0&&gs[g].indexOf(b)>=0)return true;return false;
 }
 
-function parseIn(t){t=t.trim();if(t.startsWith(">")){const l=t.split("\n");return{id:l[0].substring(1).split(/\s/)[0],seq:l.slice(1).join("").replace(/\s/g,"").toUpperCase()};}return{id:"User_sequence",seq:t.replace(/\s/g,"").toUpperCase()};}
-function validate(seq){const v=new Set("ACDEFGHIKLMNPQRSTVWY"),inv=new Set();for(const c of seq)if(!v.has(c))inv.add(c);if(inv.size>0)return{ok:false,msg:"Invalid characters: "+[...inv].join(", ")};if(seq.length<5)return{ok:false,msg:"Sequence too short (min 5 residues)"};return{ok:true};}
-function loadExample(k){const e=EX[k];document.getElementById("seqInput").value=">"+e.id+"\n"+e.seq;}
+function parseIn(t){t=t.trim();if(t.charAt(0)===">"){var l=t.split("\n");return{id:l[0].substring(1).split(/\s/)[0],seq:l.slice(1).join("").replace(/\s/g,"").toUpperCase()};}return{id:"User_sequence",seq:t.replace(/\s/g,"").toUpperCase()};}
+function validate(seq){var v="ACDEFGHIKLMNPQRSTVWY",inv=[];for(var i=0;i<seq.length;i++)if(v.indexOf(seq[i])<0&&inv.indexOf(seq[i])<0)inv.push(seq[i]);if(inv.length>0)return{ok:false,msg:"Invalid characters: "+inv.join(", ")};if(seq.length<5)return{ok:false,msg:"Sequence too short (min 5 residues)"};return{ok:true};}
+function loadExample(k){var e=EX[k];document.getElementById("seqInput").value=">"+e.id+"\n"+e.seq;}
 function clearAll(){document.getElementById("seqInput").value="";document.getElementById("results").classList.add("hidden");}
-function switchTab(name,el){document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));el.classList.add("active");document.getElementById("tab-"+name).classList.add("active");}
+function switchTab(name,el){var tabs=document.querySelectorAll(".tab");for(var i=0;i<tabs.length;i++)tabs[i].classList.remove("active");var contents=document.querySelectorAll(".tab-content");for(var i=0;i<contents.length;i++)contents[i].classList.remove("active");el.classList.add("active");document.getElementById("tab-"+name).classList.add("active");}
 
-let currentResult=null;
+var currentResult=null;
 
 function analyze(){
-    const input=document.getElementById("seqInput").value;
+    var input=document.getElementById("seqInput").value;
     if(!input.trim()){alert("Please enter a sequence.");return;}
-    const parsed=parseIn(input),val=validate(parsed.seq);
+    var parsed=parseIn(input),val=validate(parsed.seq);
     if(!val.ok){alert(val.msg);return;}
-    const seq=parsed.seq;
+    var seq=parsed.seq;
 
-    const res=score(seq),cm=comp(seq),tadR=scanTAD(seq),aln=alignMotif(seq);
-    const mI=suggestMut(seq,"increase"),mD=suggestMut(seq,"decrease");
-    const opt=optimizeSequence(seq);
-    const optComp=comp(opt.sequence);
-    const origContrib=positionContributions(seq);
-    const optContrib=positionContributions(opt.sequence);
+    var res=score(seq),cm=comp(seq),tadR=scanTAD(seq),aln=alignMotif(seq);
+    var mI=suggestMut(seq,"increase"),mD=suggestMut(seq,"decrease");
+    var opt=optimizeSequence(seq);
+    var optComp=comp(opt.sequence);
+    var origContrib=positionContributions(seq);
+    var optContrib=positionContributions(opt.sequence);
 
-    currentResult={id:parsed.id,seq,result:res,comp:cm,tadRegions:tadR,alignment:aln,
+    currentResult={id:parsed.id,seq:seq,result:res,comp:cm,tadRegions:tadR,alignment:aln,
         mutInc:mI,mutDec:mD,optimized:opt,optComp:optComp};
 
     document.getElementById("results").classList.remove("hidden");
 
-    const sc=res.s;
+    var sc=res.s;
     document.getElementById("mainScore").textContent=sc.toFixed(4);
-    const sEl=document.getElementById("mainScore");
+    var sEl=document.getElementById("mainScore");
     sEl.className="value "+(sc>=0.20?"high":sc>=0.12?"moderate":sc>=0.05?"low":"minimal");
-    let cT,cC;if(sc>=0.20){cT="HIGH";cC="high";}else if(sc>=0.12){cT="MODERATE";cC="moderate";}else if(sc>=0.05){cT="LOW";cC="low";}else{cT="MINIMAL";cC="minimal";}
-    const cEl=document.getElementById("classification");cEl.textContent=cT;cEl.className="value "+cC;
+    var cT,cC;if(sc>=0.20){cT="HIGH";cC="high";}else if(sc>=0.12){cT="MODERATE";cC="moderate";}else if(sc>=0.05){cT="LOW";cC="low";}else{cT="MINIMAL";cC="minimal";}
+    var cEl=document.getElementById("classification");cEl.textContent=cT;cEl.className="value "+cC;
     document.getElementById("seqLength").textContent=seq.length+" aa";
     document.getElementById("motifId").textContent=cm.motif_id+"%";
     document.getElementById("optScore").textContent=opt.score.toFixed(4);
 
-    const mPct=Math.min(sc/0.45*100,100);
-    const mk=document.getElementById("scoreMarker");mk.style.left=mPct+"%";mk.setAttribute("data-label","You: "+sc.toFixed(3));
-    const oPct=Math.min(opt.score/0.45*100,100);
-    const om=document.getElementById("optMarker");om.style.left=oPct+"%";om.style.display="block";om.setAttribute("data-label","Opt: "+opt.score.toFixed(3));
+    var mPct=Math.min(sc/0.45*100,100);
+    var mk=document.getElementById("scoreMarker");mk.style.left=mPct+"%";mk.setAttribute("data-label","You: "+sc.toFixed(3));
+    var oPct=Math.min(opt.score/0.45*100,100);
+    var om=document.getElementById("optMarker");om.style.left=oPct+"%";om.style.display="block";om.setAttribute("data-label","Opt: "+opt.score.toFixed(3));
 
+    /* DRAW LOGOS */
     drawLogo("logoOriginal",seq,origContrib,"Original: "+parsed.id+" (Score: "+sc.toFixed(4)+")");
     drawLogo("logoOptimized",opt.sequence,optContrib,"Optimized Variant (Score: "+opt.score.toFixed(4)+", +"+((opt.score-sc)/sc*100).toFixed(1)+"%)");
 
@@ -533,28 +557,29 @@ function analyze(){
     document.getElementById("logoOptStats").innerHTML=
         "Score: <strong style='color:#66bb6a'>"+opt.score.toFixed(4)+"</strong> | Acidic: "+optComp.acidic+"% | LFW: "+optComp.lfw+"% | "+opt.mutations.length+" mutations";
 
-    let optHtml='<div style="background:#0a0a0a;border:1px solid #222;border-radius:6px;padding:16px;margin-top:8px;">';
+    /* Optimized sequence display */
+    var optHtml='<div style="background:#0a0a0a;border:1px solid #222;border-radius:6px;padding:16px;margin-top:8px;">';
     optHtml+='<div style="font-size:0.9em;color:#66bb6a;font-weight:600;margin-bottom:8px;">Optimized Sequence ('+opt.mutations.length+' mutations, +'+((opt.score-sc)/sc*100).toFixed(1)+'%)</div>';
     optHtml+='<div style="font-family:Courier New,monospace;font-size:0.82em;word-break:break-all;line-height:1.6;">';
-    const mutPositions=new Set(opt.mutations.map(m=>m.pos-1));
-    for(let i=0;i<opt.sequence.length;i++){
-        const aa=opt.sequence[i];
-        if(mutPositions.has(i)){optHtml+='<span style="color:#66bb6a;font-weight:bold;background:rgba(102,187,106,0.2);padding:0 1px;">'+aa+'</span>';}
+    var mutPositions={};for(var k=0;k<opt.mutations.length;k++)mutPositions[opt.mutations[k].pos-1]=true;
+    for(var i=0;i<opt.sequence.length;i++){
+        var aa=opt.sequence[i];
+        if(mutPositions[i]){optHtml+='<span style="color:#66bb6a;font-weight:bold;background:rgba(102,187,106,0.2);padding:0 1px;">'+aa+'</span>';}
         else{optHtml+='<span style="color:#666;">'+aa+'</span>';}
     }
     optHtml+='</div>';
     if(opt.mutations.length>0){
         optHtml+='<div style="margin-top:12px;font-size:0.82em;color:#888;">Mutations applied:</div>';
         optHtml+='<table style="margin-top:4px;"><thead><tr><th>Pos</th><th>From</th><th>To</th><th>&#x394; Score</th><th>Cumulative</th></tr></thead><tbody>';
-        opt.mutations.forEach(function(m){
-            optHtml+='<tr><td>'+m.pos+'</td><td>'+m.from+'</td><td style="color:#66bb6a;font-weight:bold;">'+m.to+'</td><td class="mut-increase">+'+m.delta.toFixed(4)+'</td><td>'+m.cumScore.toFixed(4)+'</td></tr>';
-        });
+        for(var k=0;k<opt.mutations.length;k++){var m=opt.mutations[k];
+            optHtml+='<tr><td>'+m.pos+'</td><td>'+m.from+'</td><td style="color:#66bb6a;font-weight:bold;">'+m.to+'</td><td class="mut-increase">+'+m.delta.toFixed(4)+'</td><td>'+m.cumScore.toFixed(4)+'</td></tr>';}
         optHtml+='</tbody></table>';
     }
     optHtml+='</div>';
     document.getElementById("optSeqDisplay").innerHTML=optHtml;
 
-    const compData=[
+    /* Composition table */
+    var compData=[
         ["Acidic (D+E)",cm.acidic+"%",optComp.acidic+"%","24.2%"],
         ["Hydrophobic",cm.hydrophobic+"%",optComp.hydrophobic+"%","~35%"],
         ["LFW content",cm.lfw+"%",optComp.lfw+"%","18.2%"],
@@ -564,66 +589,77 @@ function analyze(){
         ["Shannon H",cm.shannon,optComp.shannon,"~4.1"],
         ["Motif identity",cm.motif_id+"%",optComp.motif_id+"%","94.4%"]
     ];
-    const cTb=document.querySelector("#compositionTable tbody");cTb.innerHTML="";
-    for(const row of compData){
-        const nV=parseFloat(row[1]),nR=parseFloat(row[3]);let st="&#x2796;";
-        if(!isNaN(nV)&&!isNaN(nR)){const rt=nV/nR;st=rt>=0.7&&rt<=1.5?"&#x2705;":rt>=0.4?"&#x26A0;&#xFE0F;":"&#x274C;";}
-        cTb.innerHTML+='<tr><td>'+row[0]+'</td><td>'+row[1]+'</td><td style="color:#66bb6a">'+row[2]+'</td><td>'+row[3]+'</td><td>'+st+'</td></tr>';
-    }
+    var cTb=document.querySelector("#compositionTable tbody");cTb.innerHTML="";
+    for(var k=0;k<compData.length;k++){var row=compData[k];
+        var nV=parseFloat(row[1]),nR=parseFloat(row[3]);var st="&#x2796;";
+        if(!isNaN(nV)&&!isNaN(nR)){var rt=nV/nR;st=rt>=0.7&&rt<=1.5?"&#x2705;":rt>=0.4?"&#x26A0;&#xFE0F;":"&#x274C;";}
+        cTb.innerHTML+='<tr><td>'+row[0]+'</td><td>'+row[1]+'</td><td style="color:#66bb6a">'+row[2]+'</td><td>'+row[3]+'</td><td>'+st+'</td></tr>';}
 
-    const tD=document.getElementById("tadResults");
-    if(tadR.length>0){let h='<table><thead><tr><th>#</th><th>Start</th><th>End</th><th>Score</th><th>Acidic%</th><th>LFW%</th><th>Motif%</th></tr></thead><tbody>';
-        tadR.forEach(function(r,i){h+='<tr><td>'+(i+1)+'</td><td>'+r.start+'</td><td>'+r.end+'</td><td>'+r.score.toFixed(4)+'</td><td>'+r.acidic+'</td><td>'+r.lfw+'</td><td>'+r.motif+'</td></tr>';});
+    /* TAD regions */
+    var tD=document.getElementById("tadResults");
+    if(tadR.length>0){var h='<table><thead><tr><th>#</th><th>Start</th><th>End</th><th>Score</th><th>Acidic%</th><th>LFW%</th><th>Motif%</th></tr></thead><tbody>';
+        for(var k=0;k<tadR.length;k++){var r=tadR[k];h+='<tr><td>'+(k+1)+'</td><td>'+r.start+'</td><td>'+r.end+'</td><td>'+r.score.toFixed(4)+'</td><td>'+r.acidic+'</td><td>'+r.lfw+'</td><td>'+r.motif+'</td></tr>';}
         h+='</tbody></table>';tD.innerHTML=h;}else{tD.innerHTML='<p style="color:#666;">No TAD candidate regions found above threshold.</p>';}
 
-    const tP=new Set();tadR.forEach(function(r){for(let p=r.start;p<=r.end;p++)tP.add(p);});
-    let aH="";for(let i=0;i<seq.length;i+=70){aH+=String(i+1).padStart(5," ")+"  ";
-        for(let j=i;j<Math.min(i+70,seq.length);j++){const aa=seq[j],inT=tP.has(j+1);
-            let cls="aa-other";if("DE".includes(aa))cls="aa-acidic";else if("LFW".includes(aa))cls="aa-lfw";
-            else if("VIMY".includes(aa))cls="aa-hydrophobic";else if("RKH".includes(aa))cls="aa-basic";
+    /* Sequence annotation */
+    var tP={};for(var k=0;k<tadR.length;k++){var r=tadR[k];for(var p=r.start;p<=r.end;p++)tP[p]=true;}
+    var aH="";for(var i=0;i<seq.length;i+=70){aH+=("     "+(i+1)).slice(-5)+"  ";
+        for(var j=i;j<Math.min(i+70,seq.length);j++){var aa=seq[j],inT=tP[j+1];
+            var cls="aa-other";if("DE".indexOf(aa)>=0)cls="aa-acidic";else if("LFW".indexOf(aa)>=0)cls="aa-lfw";
+            else if("VIMY".indexOf(aa)>=0)cls="aa-hydrophobic";else if("RKH".indexOf(aa)>=0)cls="aa-basic";
             aH+='<span class="'+cls+(inT?' tad-region':'')+'">'+aa+'</span>';}aH+="\n";}
     document.getElementById("seqAnnotation").innerHTML=aH;
 
-    const al=aln;
-    let alH='<div style="margin-bottom:8px;color:#888;font-size:0.85em;">Best match at position '+(al.pos+1)+' (identity: '+(al.identity*100).toFixed(1)+'%)</div>Motif:  ';
-    for(let i=0;i<al.motif.length;i++){const aa=al.motif[i];let c="aa-other";if("DE".includes(aa))c="aa-acidic";else if("LFW".includes(aa))c="aa-lfw";else if("VIMY".includes(aa))c="aa-hydrophobic";alH+='<span class="'+c+'">'+aa+'</span>';}
-    alH+="\n        ";const ww=al.window;
-    for(let i=0;i<Math.min(ww.length,al.motif.length);i++){if(ww[i]===al.motif[i])alH+='<span class="match">|</span>';else if(sameGrp(ww[i],al.motif[i]))alH+='<span class="conservative">:</span>';else alH+='<span class="mismatch">.</span>';}
-    alH+="\nQuery:  ";for(let i=0;i<ww.length;i++){const aa=ww[i];let c="aa-other";if("DE".includes(aa))c="aa-acidic";else if("LFW".includes(aa))c="aa-lfw";else if("VIMY".includes(aa))c="aa-hydrophobic";alH+='<span class="'+c+'">'+aa+'</span>';}
+    /* Motif alignment — FIXED: uses \n inside white-space:pre div */
+    var al=aln;
+    var alH='<div style="margin-bottom:8px;color:#888;font-size:0.85em;">Best match at position '+(al.pos+1)+' (identity: '+(al.identity*100).toFixed(1)+'%)</div>';
+    alH+='Motif:  ';
+    for(var i=0;i<al.motif.length;i++){var aa=al.motif[i];var c="aa-other";if("DE".indexOf(aa)>=0)c="aa-acidic";else if("LFW".indexOf(aa)>=0)c="aa-lfw";else if("VIMY".indexOf(aa)>=0)c="aa-hydrophobic";alH+='<span class="'+c+'">'+aa+'</span>';}
+    alH+='\n        ';
+    var ww=al.window;
+    for(var i=0;i<Math.min(ww.length,al.motif.length);i++){if(ww[i]===al.motif[i])alH+='<span class="match">|</span>';else if(sameGrp(ww[i],al.motif[i]))alH+='<span class="conservative">:</span>';else alH+='<span class="mismatch">.</span>';}
+    alH+='\nQuery:  ';
+    for(var i=0;i<ww.length;i++){var aa=ww[i];var c="aa-other";if("DE".indexOf(aa)>=0)c="aa-acidic";else if("LFW".indexOf(aa)>=0)c="aa-lfw";else if("VIMY".indexOf(aa)>=0)c="aa-hydrophobic";alH+='<span class="'+c+'">'+aa+'</span>';}
     document.getElementById("alignmentResult").innerHTML=alH;
-    let aP=[],hP=[];for(let i=0;i<al.motif.length;i++){if("DE".includes(al.motif[i]))aP.push(i);if("LFWMVI".includes(al.motif[i]))hP.push(i);}
-    let aM=0,hM=0;for(const p of aP)if(p<ww.length&&"DE".includes(ww[p]))aM++;for(const p of hP)if(p<ww.length&&"LFWMVI".includes(ww[p]))hM++;
+
+    var aP=[],hP=[];for(var i=0;i<al.motif.length;i++){if("DE".indexOf(al.motif[i])>=0)aP.push(i);if("LFWMVI".indexOf(al.motif[i])>=0)hP.push(i);}
+    var aM=0,hM=0;for(var k=0;k<aP.length;k++)if(aP[k]<ww.length&&"DE".indexOf(ww[aP[k]])>=0)aM++;
+    for(var k=0;k<hP.length;k++)if(hP[k]<ww.length&&"LFWMVI".indexOf(ww[hP[k]])>=0)hM++;
     document.getElementById("alignmentStats").innerHTML='<div style="font-size:0.85em;color:#888;">Acidic conservation: '+aM+'/'+aP.length+' ('+(aM/aP.length*100).toFixed(0)+'%) | Hydrophobic conservation: '+hM+'/'+hP.length+' ('+(hM/hP.length*100).toFixed(0)+'%)</div>';
 
-    const iTb=document.querySelector("#mutIncreaseTable tbody");iTb.innerHTML="";
-    mI.forEach(function(m){iTb.innerHTML+='<tr><td>'+m.from+m.pos+m.to+'</td><td>'+m.score.toFixed(4)+'</td><td class="mut-increase">+'+m.delta.toFixed(4)+'</td></tr>';});
+    /* Mutations */
+    var iTb=document.querySelector("#mutIncreaseTable tbody");iTb.innerHTML="";
+    for(var k=0;k<mI.length;k++){var m=mI[k];iTb.innerHTML+='<tr><td>'+m.from+m.pos+m.to+'</td><td>'+m.score.toFixed(4)+'</td><td class="mut-increase">+'+m.delta.toFixed(4)+'</td></tr>';}
     if(mI.length===0)iTb.innerHTML='<tr><td colspan="3" style="color:#555;">No beneficial mutations found</td></tr>';
-    const dTb=document.querySelector("#mutDecreaseTable tbody");dTb.innerHTML="";
-    mD.forEach(function(m){dTb.innerHTML+='<tr><td>'+m.from+m.pos+'A</td><td>'+m.score.toFixed(4)+'</td><td class="mut-decrease">'+m.delta.toFixed(4)+'</td></tr>';});
+    var dTb=document.querySelector("#mutDecreaseTable tbody");dTb.innerHTML="";
+    for(var k=0;k<mD.length;k++){var m=mD[k];dTb.innerHTML+='<tr><td>'+m.from+m.pos+'A</td><td>'+m.score.toFixed(4)+'</td><td class="mut-decrease">'+m.delta.toFixed(4)+'</td></tr>';}
     if(mD.length===0)dTb.innerHTML='<tr><td colspan="3" style="color:#555;">No detrimental mutations found</td></tr>';
 
-    const xTb=document.querySelector("#contextTable tbody");xTb.innerHTML="";
-    for(const sp in REFS){const ref=REFS[sp];const d=sc-ref.mean,od=opt.score-ref.mean;
+    /* Species context */
+    var xTb=document.querySelector("#contextTable tbody");xTb.innerHTML="";
+    for(var sp in REFS){var ref=REFS[sp];var d=sc-ref.mean;
         xTb.innerHTML+='<tr><td>'+sp+' (n='+ref.n+')</td><td>'+ref.mean.toFixed(3)+'\u00B1'+ref.std.toFixed(3)+'</td><td>'+sc.toFixed(4)+'</td><td style="color:#66bb6a">'+opt.score.toFixed(4)+'</td><td>'+(d>=0?"+":"")+d.toFixed(4)+'</td></tr>';}
 
     document.getElementById("results").scrollIntoView({behavior:"smooth"});
 }
 
 function downloadReport(){
-    if(!currentResult)return;const r=currentResult,sc=r.result.s,cm=r.comp,opt=r.optimized;
-    let rpt="=".repeat(70)+"\nTAL-TADscore ANALYSIS REPORT v2.0\nhttps://adonayre21.github.io/TAL-TADscore/\n"+"=".repeat(70)+"\n\n";
+    if(!currentResult)return;var r=currentResult,sc=r.result.s,cm=r.comp,opt=r.optimized;
+    var sep="======================================================================";
+    var line="----------------------------------------------------------------------";
+    var rpt=sep+"\nTAL-TADscore ANALYSIS REPORT v2.0\nhttps://adonayre21.github.io/TAL-TADscore/\n"+sep+"\n\n";
     rpt+="Sequence ID: "+r.id+"\nLength: "+r.seq.length+" aa\n\nCOMPOSITE ACTIVATION SCORE: "+sc.toFixed(4)+"\n";
     rpt+="OPTIMIZED SCORE:            "+opt.score.toFixed(4)+" (+"+((opt.score-sc)/sc*100).toFixed(1)+"%)\n";
     if(sc>=0.20)rpt+="Classification: HIGH\n";else if(sc>=0.12)rpt+="Classification: MODERATE\n";else if(sc>=0.05)rpt+="Classification: LOW\n";else rpt+="Classification: MINIMAL\n";
-    rpt+="\n"+"-".repeat(70)+"\nCOMPOSITION\n"+"-".repeat(70)+"\n";
+    rpt+="\n"+line+"\nCOMPOSITION\n"+line+"\n";
     rpt+="  Acidic (D+E):    "+cm.acidic+"%  (ref: 24.2%)\n  LFW content:     "+cm.lfw+"%  (ref: 18.2%)\n  Net charge:      "+cm.net_charge+"\n  Motif identity:  "+cm.motif_id+"%\n";
-    rpt+="\n"+"-".repeat(70)+"\nOPTIMIZED VARIANT\n"+"-".repeat(70)+"\n";
+    rpt+="\n"+line+"\nOPTIMIZED VARIANT\n"+line+"\n";
     rpt+="Sequence: "+opt.sequence+"\n\nMutations ("+opt.mutations.length+"):\n";
-    opt.mutations.forEach(function(m){rpt+="  "+m.from+m.pos+m.to+"  delta=+"+m.delta.toFixed(4)+"  cumulative="+m.cumScore.toFixed(4)+"\n";});
-    rpt+="\n"+"-".repeat(70)+"\nSPECIES COMPARISON\n"+"-".repeat(70)+"\n";
-    for(const sp in REFS){const ref=REFS[sp];const d=sc-ref.mean;rpt+="  "+sp.padEnd(22)+" "+ref.mean.toFixed(3)+"   "+(d>=0?"+":"")+d.toFixed(4)+"\n";}
-    rpt+="\n"+"=".repeat(70)+"\nDonayre-Torres & Gutierrez-Pescarmona (2026). UTEC, Lima, Peru.\n"+"=".repeat(70)+"\n";
-    const blob=new Blob([rpt],{type:"text/plain"}),a=document.createElement("a");
+    for(var k=0;k<opt.mutations.length;k++){var m=opt.mutations[k];rpt+="  "+m.from+m.pos+m.to+"  delta=+"+m.delta.toFixed(4)+"  cumulative="+m.cumScore.toFixed(4)+"\n";}
+    rpt+="\n"+line+"\nSPECIES COMPARISON\n"+line+"\n";
+    for(var sp in REFS){var ref=REFS[sp];var d=sc-ref.mean;rpt+="  "+(sp+"                      ").substring(0,22)+" "+ref.mean.toFixed(3)+"   "+(d>=0?"+":"")+d.toFixed(4)+"\n";}
+    rpt+="\n"+sep+"\nDonayre-Torres & Gutierrez-Pescarmona (2026). UTEC, Lima, Peru.\n"+sep+"\n";
+    var blob=new Blob([rpt],{type:"text/plain"}),a=document.createElement("a");
     a.href=URL.createObjectURL(blob);a.download="TAL_TADscore_"+r.id+".txt";a.click();
 }
 </script>
