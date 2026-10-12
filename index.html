@@ -1,0 +1,604 @@
+<!-- File: index.html -->
+<!-- Deploy to: https://adonayre21.github.io/TAL-TADscore/ -->
+<!-- Single-file web app — no dependencies, no server needed -->
+<!-- All computation runs in the user's browser -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAL-TADscore | Transcriptional Activation Domain Predictor</title>
+    <meta name="description" content="Web predictor for transcriptional activation domains in TAL effector proteins. Donayre-Torres & Gutierrez-Pescarmona, UTEC Lima Peru.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .header {
+            text-align: center;
+            padding: 40px 20px 30px;
+            border-bottom: 1px solid #222;
+        }
+        .header h1 {
+            font-size: 2.2em;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        .header h1 span { color: #4fc3f7; }
+        .header .subtitle {
+            font-size: 1.05em;
+            color: #888;
+            margin-bottom: 6px;
+        }
+        .header .authors {
+            font-size: 0.85em;
+            color: #666;
+        }
+        .header .authors a { color: #4fc3f7; text-decoration: none; }
+        .section {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .section h2 {
+            font-size: 1.15em;
+            color: #fff;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #222;
+        }
+        textarea {
+            width: 100%;
+            height: 140px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            padding: 12px;
+            resize: vertical;
+        }
+        textarea:focus { outline: none; border-color: #4fc3f7; }
+        textarea::placeholder { color: #555; }
+        .input-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-primary { background: #4fc3f7; color: #000; }
+        .btn-primary:hover { background: #81d4fa; }
+        .btn-secondary { background: #222; color: #aaa; border: 1px solid #333; }
+        .btn-secondary:hover { background: #333; color: #fff; }
+        .btn-example {
+            background: transparent;
+            color: #4fc3f7;
+            border: 1px solid #333;
+            padding: 6px 14px;
+            font-size: 0.82em;
+        }
+        .btn-example:hover { border-color: #4fc3f7; }
+        .score-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .score-card {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .score-card .label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .score-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #fff;
+        }
+        .score-card .value.high { color: #66bb6a; }
+        .score-card .value.moderate { color: #ffa726; }
+        .score-card .value.low { color: #ef5350; }
+        .score-card .value.minimal { color: #555; }
+        .score-bar-container { margin: 20px 0; position: relative; }
+        .score-bar {
+            height: 32px;
+            background: linear-gradient(to right, #333 0%, #ef5350 25%, #ffa726 50%, #66bb6a 75%, #4fc3f7 100%);
+            border-radius: 6px;
+            position: relative;
+        }
+        .score-marker {
+            position: absolute;
+            top: -8px;
+            width: 3px;
+            height: 48px;
+            background: #fff;
+            transform: translateX(-50%);
+        }
+        .score-marker::after {
+            content: attr(data-label);
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75em;
+            color: #fff;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+        .ref-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 0.7em;
+            color: #666;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #0a0a0a;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #222;
+        }
+        td { padding: 8px 12px; border-bottom: 1px solid #1a1a1a; color: #ccc; }
+        tr:hover td { background: #1a1a1a; }
+        .seq-annotation {
+            font-family: 'Courier New', monospace;
+            font-size: 0.82em;
+            line-height: 1.8;
+            background: #0a0a0a;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre;
+            border: 1px solid #222;
+        }
+        .aa-acidic { color: #ef5350; font-weight: bold; }
+        .aa-hydrophobic { color: #4fc3f7; font-weight: bold; }
+        .aa-lfw { color: #66bb6a; font-weight: bold; }
+        .aa-basic { color: #ce93d8; }
+        .aa-other { color: #666; }
+        .tad-region { background: rgba(79, 195, 247, 0.15); }
+        .alignment {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 2;
+            background: #0a0a0a;
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid #222;
+            overflow-x: auto;
+        }
+        .match { color: #66bb6a; }
+        .conservative { color: #ffa726; }
+        .mismatch { color: #ef5350; }
+        .mut-increase { color: #66bb6a; }
+        .mut-decrease { color: #ef5350; }
+        .tabs { display: flex; gap: 0; border-bottom: 1px solid #222; margin-bottom: 16px; }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: #666;
+            font-size: 0.9em;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: #aaa; }
+        .tab.active { color: #4fc3f7; border-bottom-color: #4fc3f7; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #555;
+            font-size: 0.8em;
+            border-top: 1px solid #222;
+            margin-top: 30px;
+        }
+        .footer a { color: #4fc3f7; text-decoration: none; }
+        .hidden { display: none; }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.6em; }
+            .score-panel { grid-template-columns: 1fr 1fr; }
+            .input-row { flex-direction: column; }
+        }
+        .info-box {
+            background: rgba(79, 195, 247, 0.08);
+            border-left: 3px solid #4fc3f7;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 0.85em;
+            color: #aaa;
+            border-radius: 0 6px 6px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>&#x1F9EC; TAL-<span>TADscore</span></h1>
+    <div class="subtitle">Transcriptional Activation Domain Predictor for Cross-Kingdom Effectors</div>
+    <div class="authors">
+        Donayre-Torres AJ &amp; Gutierrez-Pescarmona &mdash;
+        <a href="https://utec.edu.pe" target="_blank">UTEC</a>, Lima, Peru | v1.0.0
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="section">
+        <h2>&#x1F4E5; Input Sequence</h2>
+        <textarea id="seqInput" placeholder="Paste your protein sequence here (raw or FASTA format)...&#10;&#10;Example: MREQDEDPFAGAADDFPAFNEEELAWLMELLPQ"></textarea>
+        <div class="input-row">
+            <button class="btn btn-primary" onclick="analyze()">&#x1F52C; Analyze</button>
+            <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+            <span style="color:#555; font-size:0.85em;">or try:</span>
+            <button class="btn btn-example" onclick="loadExample('tal')">TAL CTR</button>
+            <button class="btn btn-example" onclick="loadExample('vp16')">VP16</button>
+            <button class="btn btn-example" onclick="loadExample('p53')">p53</button>
+            <button class="btn btn-example" onclick="loadExample('edll')">EDLL</button>
+            <button class="btn btn-example" onclick="loadExample('gal4')">Gal4</button>
+            <button class="btn btn-example" onclick="loadExample('negative')">Negative ctrl</button>
+        </div>
+        <div class="info-box" style="margin-top:12px;">
+            All computation runs locally in your browser. Your sequences are never sent to any server.
+        </div>
+    </div>
+
+    <div id="results" class="hidden">
+
+        <div class="section">
+            <h2>&#x1F4CA; Activation Score</h2>
+            <div class="score-panel">
+                <div class="score-card">
+                    <div class="label">Composite Score</div>
+                    <div class="value" id="mainScore">&mdash;</div>
+                </div>
+                <div class="score-card">
+                    <div class="label">Classification</div>
+                    <div class="value" id="classification">&mdash;</div>
+                </div>
+                <div class="score-card">
+                    <div class="label">Length</div>
+                    <div class="value" id="seqLength" style="color:#888;">&mdash;</div>
+                </div>
+                <div class="score-card">
+                    <div class="label">Motif Identity</div>
+                    <div class="value" id="motifId" style="color:#888;">&mdash;</div>
+                </div>
+            </div>
+            <div class="score-bar-container">
+                <div class="score-bar">
+                    <div class="score-marker" id="scoreMarker" style="left:0%" data-label=""></div>
+                </div>
+                <div class="ref-markers">
+                    <span>0.0 (No activation)</span>
+                    <span>KO: 0.016</span>
+                    <span>WT: ~0.19</span>
+                    <span>VP16: 0.23</span>
+                    <span>0.40+</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('composition')">Composition</div>
+                <div class="tab" onclick="switchTab('tad')">TAD Regions</div>
+                <div class="tab" onclick="switchTab('alignment')">Motif Alignment</div>
+                <div class="tab" onclick="switchTab('mutations')">Mutations</div>
+                <div class="tab" onclick="switchTab('context')">Species Context</div>
+            </div>
+
+            <div id="tab-composition" class="tab-content active">
+                <table id="compositionTable">
+                    <thead><tr><th>Property</th><th>Your Value</th><th>TAL CTR Reference</th><th>Status</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div id="tab-tad" class="tab-content">
+                <div id="tadResults"></div>
+                <div id="seqAnnotation" class="seq-annotation" style="margin-top:16px;"></div>
+                <div style="margin-top:8px; font-size:0.75em; color:#555;">
+                    Color code: <span class="aa-acidic">D/E (acidic)</span> &nbsp;
+                    <span class="aa-lfw">L/F/W (key hydrophobic)</span> &nbsp;
+                    <span class="aa-hydrophobic">V/I/M/Y (hydrophobic)</span> &nbsp;
+                    <span class="aa-basic">R/K/H (basic)</span> &nbsp;
+                    <span class="aa-other">other</span> &nbsp;
+                    <span class="tad-region" style="padding:2px 6px;">TAD candidate</span>
+                </div>
+            </div>
+
+            <div id="tab-alignment" class="tab-content">
+                <div id="alignmentResult" class="alignment"></div>
+                <div id="alignmentStats" style="margin-top:12px;"></div>
+            </div>
+
+            <div id="tab-mutations" class="tab-content">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                    <div>
+                        <h3 style="font-size:0.95em; color:#66bb6a; margin-bottom:12px;">&#x2B06; Increase Activation</h3>
+                        <table id="mutIncreaseTable">
+                            <thead><tr><th>Mutation</th><th>Score</th><th>&#x394;</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h3 style="font-size:0.95em; color:#ef5350; margin-bottom:12px;">&#x2B07; Decrease Activation</h3>
+                        <table id="mutDecreaseTable">
+                            <thead><tr><th>Mutation</th><th>Score</th><th>&#x394;</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-context" class="tab-content">
+                <table id="contextTable">
+                    <thead><tr><th>Reference</th><th>Mean Score</th><th>Your Score</th><th>Difference</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section" style="text-align:center;">
+            <button class="btn btn-primary" onclick="downloadReport()">&#x1F4E5; Download Full Report (TXT)</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>&#x2139;&#xFE0F; Method</h2>
+        <p style="font-size:0.85em; color:#999; margin-bottom:12px;">
+            TAL-TADscore computes a <strong>Composite Activation Score</strong> based on five biophysical
+            properties associated with transcriptional activation domain function:
+        </p>
+        <div style="background:#0a0a0a; padding:16px; border-radius:6px; font-family:monospace; font-size:0.9em; color:#4fc3f7; text-align:center; border:1px solid #222;">
+            S = 0.30 &times; acidic_density + 0.25 &times; LFW_content + 0.20 &times; neg_charge + 0.15 &times; interleaving + 0.10 &times; motif_identity
+        </div>
+        <p style="font-size:0.82em; color:#666; margin-top:12px;">
+            Weights derived from Random Forest feature importance analysis of 126 unique CTR sequences
+            across five <em>Xanthomonas</em> species. The canonical 33-aa motif
+            (MREQDEDPFAGAADDFPAFNEEELAWLMELLPQ) was identified in 94.4% of natural TAL CTRs.
+        </p>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>
+        <strong>TAL-TADscore</strong> v1.0.0 |
+        <a href="https://github.com/adonayre21/TAL-TADscore" target="_blank">GitHub</a> |
+        MIT License
+    </p>
+    <p style="margin-top:6px;">
+        Donayre-Torres AJ &amp; Gutierrez-Pescarmona (2026).
+        <em>Conserved Architecture and Lineage-Specific Variation of the C-Terminal
+        Transcriptional Activation Region Across TAL-Like Proteins from Xanthomonas.</em>
+        UTEC, Lima, Peru.
+    </p>
+</div>
+
+<script>
+const CANONICAL_MOTIF = "MREQDEDPFAGAADDFPAFNEEELAWLMELLPQ";
+const WEIGHTS = {
+    acidic_density: 0.30, lfw_content: 0.25,
+    neg_charge_density: 0.20, interleaving_freq: 0.15, motif_identity: 0.10
+};
+const REFERENCES = {
+    "X. citri":         { mean: 0.449, std: 0.042, n: 42 },
+    "X. oryzae":        { mean: 0.406, std: 0.065, n: 35 },
+    "X. axonopodis":    { mean: 0.473, std: 0.051, n: 18 },
+    "X. euvesicatoria": { mean: 0.477, std: 0.038, n: 21 },
+    "X. campestris":    { mean: 0.421, std: 0.058, n: 10 },
+    "Control+":         { mean: 0.505, std: 0.014, n: 10 },
+    "Control\u2212":    { mean: 0.112, std: 0.004, n: 10 }
+};
+const EXAMPLES = {
+    tal:      { id: "TAL_CTR_canonical", seq: "MREQDEDPFAGAADDFPAFNEEELAWLMELLPQ" },
+    vp16:     { id: "VP16_TAD_413-490", seq: "APPTDVSLGDELHLDGEDVAMAHADALDDFDLDMLGDGDSPGPGFTPHDSAPYGALDMADFEFEQMFTDALGIDEYGG" },
+    p53:      { id: "p53_TAD1_1-42", seq: "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDL" },
+    edll:     { id: "EDLL_ERF98", seq: "EDLLMDDELTSSLDFDI" },
+    gal4:     { id: "Gal4_TAD_840-881", seq: "MYDFLPNLNEDFDSSANFTSEFYLDEKRDDFYYQNLGPYQY" },
+    negative: { id: "GFP_barrel_negative", seq: "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTLTYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTR" }
+};
+
+function countChars(seq, chars) {
+    let c = 0; for (const s of seq) if (chars.includes(s)) c++; return c;
+}
+function computeMotifIdentity(seq) {
+    const m = CANONICAL_MOTIF, mL = m.length;
+    if (seq.length < mL) { let c=0; for(let i=0;i<seq.length;i++) if(seq[i]===m[i]) c++; return c/mL; }
+    let best = 0;
+    for (let i=0; i<=seq.length-mL; i++) {
+        let c=0; for(let j=0;j<mL;j++) if(seq[i+j]===m[j]) c++;
+        best = Math.max(best, c/mL);
+    }
+    return best;
+}
+function computeScore(seq) {
+    const L = seq.length; if(L===0) return {score:0, components:{}};
+    const ad = countChars(seq,"DE")/L;
+    const lfw = countChars(seq,"LFW")/L;
+    const neg = countChars(seq,"DE"), pos = countChars(seq,"RK")+0.1*countChars(seq,"H");
+    const ncd = Math.max(0,(neg-pos))/L;
+    let il=0;
+    for(let i=0;i<L-1;i++){
+        if(("DE".includes(seq[i])&&"LFWIV".includes(seq[i+1]))||("LFWIV".includes(seq[i])&&"DE".includes(seq[i+1]))) il++;
+    }
+    const ilf = il/Math.max(L-1,1);
+    const mi = computeMotifIdentity(seq);
+    const score = WEIGHTS.acidic_density*ad + WEIGHTS.lfw_content*lfw + WEIGHTS.neg_charge_density*ncd + WEIGHTS.interleaving_freq*ilf + WEIGHTS.motif_identity*mi;
+    return { score, components: { acidic_density:ad, lfw_content:lfw, neg_charge_density:ncd, interleaving_freq:ilf, motif_identity:mi }};
+}
+function computeComposition(seq) {
+    const L=seq.length;
+    return {
+        acidic:(countChars(seq,"DE")/L*100).toFixed(1),
+        hydrophobic:(countChars(seq,"VILMFWY")/L*100).toFixed(1),
+        lfw:(countChars(seq,"LFW")/L*100).toFixed(1),
+        basic:(countChars(seq,"RKH")/L*100).toFixed(1),
+        net_charge:(countChars(seq,"RK")+0.1*countChars(seq,"H")-countChars(seq,"DE")).toFixed(1),
+        interleaving:(computeScore(seq).components.interleaving_freq*100).toFixed(1),
+        shannon: (function(){const c={}; for(const a of seq) c[a]=(c[a]||0)+1; let H=0; for(const a in c){const p=c[a]/L; if(p>0) H-=p*Math.log2(p);} return H;})().toFixed(3),
+        motif_id:(computeMotifIdentity(seq)*100).toFixed(1)
+    };
+}
+function scanTAD(seq, ws=33, th=0.15) {
+    const cands=[]; if(seq.length<ws) ws=seq.length;
+    for(let i=0;i<=seq.length-ws;i++){
+        const w=seq.substring(i,i+ws), r=computeScore(w);
+        if(r.score>=th) cands.push({start:i+1,end:i+ws,score:r.score,seq:w,
+            acidic:(countChars(w,"DE")/ws*100).toFixed(1),lfw:(countChars(w,"LFW")/ws*100).toFixed(1),
+            motif:(r.components.motif_identity*100).toFixed(1)});
+    }
+    cands.sort((a,b)=>b.score-a.score);
+    const sel=[], used=new Set();
+    for(const c of cands){let ov=0;for(let p=c.start;p<=c.end;p++)if(used.has(p))ov++;
+        if(ov/(c.end-c.start+1)<0.5){sel.push(c);for(let p=c.start;p<=c.end;p++)used.add(p);}}
+    return sel.sort((a,b)=>a.start-b.start);
+}
+function suggestMutations(seq,dir,n=8){
+    const orig=computeScore(seq).score, sugs=[];
+    for(let i=0;i<seq.length;i++){const aa=seq[i];
+        if(dir==="increase"&&"AGSTQN".includes(aa)){
+            for(const rep of "DELFW"){const mut=seq.substring(0,i)+rep+seq.substring(i+1);
+                const ns=computeScore(mut).score,d=ns-orig;if(d>0)sugs.push({pos:i+1,from:aa,to:rep,score:ns,delta:d});}
+        }else if(dir==="decrease"&&"DEFLW".includes(aa)){
+            const mut=seq.substring(0,i)+"A"+seq.substring(i+1);
+            const ns=computeScore(mut).score,d=ns-orig;if(d<0)sugs.push({pos:i+1,from:aa,to:"A",score:ns,delta:d});}
+    }
+    sugs.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)); return sugs.slice(0,n);
+}
+function alignToMotif(seq){
+    const m=CANONICAL_MOTIF,mL=m.length; let bP=0,bI=0;
+    if(seq.length<mL){let c=0;for(let i=0;i<seq.length;i++)if(seq[i]===m[i])c++;return{pos:0,identity:c/mL,window:seq,motif:m.substring(0,seq.length)};}
+    for(let i=0;i<=seq.length-mL;i++){let c=0;for(let j=0;j<mL;j++)if(seq[i+j]===m[j])c++;if(c/mL>bI){bI=c/mL;bP=i;}}
+    return{pos:bP,identity:bI,window:seq.substring(bP,bP+mL),motif:m};
+}
+function sameGroup(a,b){
+    const gs=[new Set("DE"),new Set("RKH"),new Set("LFWMVI"),new Set("STNQ"),new Set("AG")];
+    for(const g of gs)if(g.has(a)&&g.has(b))return true;return false;
+}
+function parseInput(t){t=t.trim();if(t.startsWith(">")){const l=t.split("\n");return{id:l[0].substring(1).split(/\s/)[0],seq:l.slice(1).join("").replace(/\s/g,"").toUpperCase()};}return{id:"User_sequence",seq:t.replace(/\s/g,"").toUpperCase()};}
+function validateSeq(seq){const v=new Set("ACDEFGHIKLMNPQRSTVWY"),inv=new Set();for(const c of seq)if(!v.has(c))inv.add(c);if(inv.size>0)return{ok:false,msg:"Invalid characters: "+[...inv].join(", ")};if(seq.length<5)return{ok:false,msg:"Sequence too short (min 5 residues)"};return{ok:true};}
+function loadExample(k){const e=EXAMPLES[k];document.getElementById("seqInput").value=">"+e.id+"\n"+e.seq;}
+function clearAll(){document.getElementById("seqInput").value="";document.getElementById("results").classList.add("hidden");}
+function switchTab(name){document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));event.target.classList.add("active");document.getElementById("tab-"+name).classList.add("active");}
+
+let currentResult = null;
+
+function analyze(){
+    const input=document.getElementById("seqInput").value;
+    if(!input.trim()){alert("Please enter a sequence.");return;}
+    const parsed=parseInput(input),val=validateSeq(parsed.seq);
+    if(!val.ok){alert(val.msg);return;}
+    const seq=parsed.seq,result=computeScore(seq),comp=computeComposition(seq),
+        tadR=scanTAD(seq),aln=alignToMotif(seq),mI=suggestMutations(seq,"increase"),mD=suggestMutations(seq,"decrease");
+    currentResult={id:parsed.id,seq,result,comp,tadRegions:tadR,alignment:aln,mutInc:mI,mutDec:mD};
+    document.getElementById("results").classList.remove("hidden");
+    const score=result.score;
+    document.getElementById("mainScore").textContent=score.toFixed(4);
+    const sEl=document.getElementById("mainScore");
+    sEl.className="value "+(score>=0.20?"high":score>=0.12?"moderate":score>=0.05?"low":"minimal");
+    let cT,cC;if(score>=0.20){cT="HIGH";cC="high";}else if(score>=0.12){cT="MODERATE";cC="moderate";}else if(score>=0.05){cT="LOW";cC="low";}else{cT="MINIMAL";cC="minimal";}
+    const cEl=document.getElementById("classification");cEl.textContent=cT;cEl.className="value "+cC;
+    document.getElementById("seqLength").textContent=seq.length+" aa";
+    document.getElementById("motifId").textContent=comp.motif_id+"%";
+    const mPct=Math.min(score/0.45*100,100),mk=document.getElementById("scoreMarker");
+    mk.style.left=mPct+"%";mk.setAttribute("data-label",score.toFixed(3));
+
+    const compData=[["Acidic (D+E)",comp.acidic+"%","24.2%"],["Hydrophobic (VILMFWY)",comp.hydrophobic+"%","~35%"],
+        ["LFW content",comp.lfw+"%","18.2%"],["Basic (RKH)",comp.basic+"%","~8%"],["Net charge",comp.net_charge,"-7.0"],
+        ["Interleaving freq",comp.interleaving+"%","~5%"],["Shannon entropy",comp.shannon,"~4.1"],["Motif identity",comp.motif_id+"%","94.4%"]];
+    const cTb=document.querySelector("#compositionTable tbody");cTb.innerHTML="";
+    for(const[p,v,r]of compData){const nV=parseFloat(v),nR=parseFloat(r);let st="&#x2796;";
+        if(!isNaN(nV)&&!isNaN(nR)){const rt=nV/nR;st=rt>=0.7&&rt<=1.5?"&#x2705;":rt>=0.4?"&#x26A0;&#xFE0F;":"&#x274C;";}
+        cTb.innerHTML+=`<tr><td>${p}</td><td>${v}</td><td>${r}</td><td>${st}</td></tr>`;}
+
+    const tD=document.getElementById("tadResults");
+    if(tadR.length>0){let h='<table><thead><tr><th>Region</th><th>Start</th><th>End</th><th>Score</th><th>Acidic%</th><th>LFW%</th><th>Motif%</th></tr></thead><tbody>';
+        tadR.forEach((r,i)=>{h+=`<tr><td>${i+1}</td><td>${r.start}</td><td>${r.end}</td><td>${r.score.toFixed(4)}</td><td>${r.acidic}</td><td>${r.lfw}</td><td>${r.motif}</td></tr>`;});
+        h+='</tbody></table>';tD.innerHTML=h;}else{tD.innerHTML='<p style="color:#666;">No TAD candidate regions found above threshold.</p>';}
+
+    const tP=new Set();tadR.forEach(r=>{for(let p=r.start;p<=r.end;p++)tP.add(p);});
+    let aH="";for(let i=0;i<seq.length;i+=70){aH+=String(i+1).padStart(5," ")+"  ";
+        for(let j=i;j<Math.min(i+70,seq.length);j++){const aa=seq[j],inT=tP.has(j+1);
+            let cls="aa-other";if("DE".includes(aa))cls="aa-acidic";else if("LFW".includes(aa))cls="aa-lfw";
+            else if("VIMY".includes(aa))cls="aa-hydrophobic";else if("RKH".includes(aa))cls="aa-basic";
+            aH+=`<span class="${cls}${inT?' tad-region':''}">${aa}</span>`;}aH+="\n";}
+    document.getElementById("seqAnnotation").innerHTML=aH;
+
+    let alH=`<div style="margin-bottom:8px;color:#888;font-size:0.85em;">Best match at position ${aln.pos+1} (identity: ${(aln.identity*100).toFixed(1)}%)</div>Motif:  `;
+    for(let i=0;i<aln.motif.length;i++){const aa=aln.motif[i];let c="aa-other";if("DE".includes(aa))c="aa-acidic";else if("LFW".includes(aa))c="aa-lfw";else if("VIMY".includes(aa))c="aa-hydrophobic";alH+=`<span class="${c}">${aa}</span>`;}
+    alH+="\n        ";const w=aln.window;
+    for(let i=0;i<Math.min(w.length,aln.motif.length);i++){if(w[i]===aln.motif[i])alH+=`<span class="match">|</span>`;else if(sameGroup(w[i],aln.motif[i]))alH+=`<span class="conservative">:</span>`;else alH+=`<span class="mismatch">.</span>`;}
+    alH+="\nQuery:  ";for(let i=0;i<w.length;i++){const aa=w[i];let c="aa-other";if("DE".includes(aa))c="aa-acidic";else if("LFW".includes(aa))c="aa-lfw";else if("VIMY".includes(aa))c="aa-hydrophobic";alH+=`<span class="${c}">${aa}</span>`;}
+    document.getElementById("alignmentResult").innerHTML=alH;
+    let aP=[],hP=[];for(let i=0;i<aln.motif.length;i++){if("DE".includes(aln.motif[i]))aP.push(i);if("LFWMVI".includes(aln.motif[i]))hP.push(i);}
+    let aM=0,hM=0;for(const p of aP)if(p<w.length&&"DE".includes(w[p]))aM++;for(const p of hP)if(p<w.length&&"LFWMVI".includes(w[p]))hM++;
+    document.getElementById("alignmentStats").innerHTML=`<div style="font-size:0.85em;color:#888;">Acidic conservation: ${aM}/${aP.length} (${(aM/aP.length*100).toFixed(0)}%) | Hydrophobic conservation: ${hM}/${hP.length} (${(hM/hP.length*100).toFixed(0)}%)</div>`;
+
+    const iTb=document.querySelector("#mutIncreaseTable tbody");iTb.innerHTML="";
+    mI.forEach(m=>{iTb.innerHTML+=`<tr><td>${m.from}${m.pos}${m.to}</td><td>${m.score.toFixed(4)}</td><td class="mut-increase">+${m.delta.toFixed(4)}</td></tr>`;});
+    if(mI.length===0)iTb.innerHTML='<tr><td colspan="3" style="color:#555;">No beneficial mutations found</td></tr>';
+    const dTb=document.querySelector("#mutDecreaseTable tbody");dTb.innerHTML="";
+    mD.forEach(m=>{dTb.innerHTML+=`<tr><td>${m.from}${m.pos}A</td><td>${m.score.toFixed(4)}</td><td class="mut-decrease">${m.delta.toFixed(4)}</td></tr>`;});
+    if(mD.length===0)dTb.innerHTML='<tr><td colspan="3" style="color:#555;">No detrimental mutations found</td></tr>';
+
+    const xTb=document.querySelector("#contextTable tbody");xTb.innerHTML="";
+    for(const[sp,ref]of Object.entries(REFERENCES)){const d=score-ref.mean;
+        xTb.innerHTML+=`<tr><td>${sp} (n=${ref.n})</td><td>${ref.mean.toFixed(3)} \u00B1 ${ref.std.toFixed(3)}</td><td>${score.toFixed(4)}</td><td>${d>=0?"+":""}${d.toFixed(4)}</td></tr>`;}
+    document.getElementById("results").scrollIntoView({behavior:"smooth"});
+}
+
+function downloadReport(){
+    if(!currentResult)return;const r=currentResult,score=r.result.score,comp=r.comp;
+    let rpt="=".repeat(70)+"\nTAL-TADscore ANALYSIS REPORT\nVersion: 1.0.0 | https://adonayre21.github.io/TAL-TADscore/\n"+"=".repeat(70)+"\n\n";
+    rpt+=`Sequence ID: ${r.id}\nLength: ${r.seq.length} aa\n\nCOMPOSITE ACTIVATION SCORE: ${score.toFixed(4)}\n`;
+    if(score>=0.20)rpt+="Classification: HIGH\n";else if(score>=0.12)rpt+="Classification: MODERATE\n";else if(score>=0.05)rpt+="Classification: LOW\n";else rpt+="Classification: MINIMAL\n";
+    rpt+="\n"+"-".repeat(70)+"\nCOMPOSITION\n"+"-".repeat(70)+"\n";
+    rpt+=`  Acidic (D+E):    ${comp.acidic}%  (ref: 24.2%)\n  LFW content:     ${comp.lfw}%  (ref: 18.2%)\n  Net charge:      ${comp.net_charge}\n  Interleaving:    ${comp.interleaving}%\n  Motif identity:  ${comp.motif_id}%\n`;
+    rpt+="\n"+"-".repeat(70)+"\nTAD REGIONS\n"+"-".repeat(70)+"\n";
+    if(r.tadRegions.length>0)r.tadRegions.forEach((reg,i)=>{rpt+=`  Region ${i+1}: pos ${reg.start}-${reg.end}, score=${reg.score.toFixed(4)}\n    ${reg.seq}\n`;});
+    else rpt+="  No TAD regions found.\n";
+    rpt+="\n"+"-".repeat(70)+"\nSPECIES COMPARISON\n"+"-".repeat(70)+"\n";
+    for(const[sp,ref]of Object.entries(REFERENCES)){const d=score-ref.mean;rpt+=`  ${sp.padEnd(22)} ${ref.mean.toFixed(3)}   ${(d>=0?"+":"")+d.toFixed(4)}\n`;}
+    rpt+="\n"+"=".repeat(70)+"\nDonayre-Torres & Gutierrez-Pescarmona (2026). UTEC, Lima, Peru.\n"+"=".repeat(70)+"\n";
+    const blob=new Blob([rpt],{type:"text/plain"}),a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download=`TAL_TADscore_${r.id}.txt`;a.click();
+}
+</script>
+</body>
+</html>
